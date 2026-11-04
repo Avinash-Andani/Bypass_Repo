@@ -35,10 +35,11 @@ module system (
         .mem_rdata (mem_rdata)
     );
 
+    // True Synchronous 32-Bit Block RAM (1024 Words = 4KB)
     (* ram_style = "block" *) reg [31:0] memory [0:1023];
 
     initial begin
-        $readmemh("C:/myrio_workspace/Coprocessor/software/firmware.hex", memory);
+        $readmemh("C:/myrio_workspace/1_github_src/software/firmware.hex", memory);
     end
 
     wire [9:0] word_addr = mem_addr[11:2];
@@ -120,6 +121,7 @@ module system (
                 mem_ready <= 1'b0;
             end
 
+            // Hardware Performance Counter (Starts on coproc_start, freezes on coproc_done)
             if (coproc_done) begin
                 hw_counting         <= 1'b0;
                 hw_cycles           <= hw_counter_live;
@@ -128,6 +130,7 @@ module system (
                 hw_counter_live     <= hw_counter_live + 32'd1;
             end
 
+            // Software Performance Counter
             if (sw_counting) begin
                 sw_counter_live     <= sw_counter_live + 32'd1;
             end
@@ -142,7 +145,10 @@ module system (
                         coproc_wr_en <= 1'b1;
                     end
                     32'h4000_0004: begin
-                        coproc_start <= mem_wdata[0];
+                        coproc_start        <= mem_wdata[0];
+                        hw_counter_live     <= 32'd1;
+                        hw_counting         <= 1'b1;
+                        coproc_done_latched <= 1'b0;
                     end
                     32'h4000_0010: begin
                         hw_counter_live     <= 32'd1;

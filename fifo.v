@@ -1,23 +1,23 @@
+`timescale 1ns / 1ps
+
 module fifo #(
     parameter DATA_WIDTH = 8,
-    parameter DEPTH = 16    
-) (
-    input clk,
-    input rst,
-    input wr_en,            
-    input rd_en,            
-    input [DATA_WIDTH-1:0] data_in,
-    
-    output reg [DATA_WIDTH-1:0] data_out,
-    output full,            
-    output empty            
+    parameter DEPTH      = 16
+)(
+    input  wire                  clk,
+    input  wire                  rst,
+    input  wire                  wr_en,
+    input  wire                  rd_en,
+    input  wire [DATA_WIDTH-1:0] data_in,
+    output reg  [DATA_WIDTH-1:0] data_out,
+    output wire                  full,
+    output wire                  empty
 );
 
     reg [DATA_WIDTH-1:0] memory [0:DEPTH-1];
-    
     reg [3:0] wr_ptr;
     reg [3:0] rd_ptr;
-    reg [4:0] count;        
+    reg [4:0] count;
 
     assign empty = (count == 0);
     assign full  = (count == DEPTH);
@@ -33,19 +33,17 @@ module fifo #(
                 memory[wr_ptr] <= data_in;
                 wr_ptr <= wr_ptr + 1;
             end
-
             if (rd_en && !empty) begin
                 data_out <= memory[rd_ptr];
                 rd_ptr <= rd_ptr + 1;
-            end
-            else begin
+            end else begin
                 data_out <= 0;
             end
-            
-            if (wr_en && !full && (!rd_en || empty)) 
+            if (wr_en && !full && (!rd_en || empty))
                 count <= count + 1;
-            else if (rd_en && !empty && (!wr_en || full)) 
+            else if (rd_en && !empty && (!wr_en || full))
                 count <= count - 1;
         end
     end
+
 endmodule

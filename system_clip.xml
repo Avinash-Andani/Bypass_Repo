@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<CLIPDeclaration Name="RISCV_Systolic_Phase2">
+<CLIPDeclaration Name="RISCV_Systolic_Phase1_Telemetry">
   <FormatVersion>1.0</FormatVersion>
-  <HDLName>system</HDLName>
+  <HDLName>system_wrapper</HDLName>
   <ImplementationList>
-    <Path>system.v</Path>
+    <Path>system_wrapper.vhd</Path>
+    <Path>system.edf</Path>
   </ImplementationList>
   <InterfaceList>
     <Interface Name="Clock_40MHz">
