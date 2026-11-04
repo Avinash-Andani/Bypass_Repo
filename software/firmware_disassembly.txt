@@ -1,0 +1,63 @@
+
+firmware.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:	00001137          	lui	sp,0x1
+   4:	ff010113          	addi	sp,sp,-16 # ff0 <sw_result+0xef8>
+   8:	0040006f          	j	c <main>
+
+0000000c <main>:
+   c:	00100613          	li	a2,1
+  10:	400006b7          	lui	a3,0x40000
+  14:	080407b7          	lui	a5,0x8040
+  18:	00c6a823          	sw	a2,16(a3) # 40000010 <sw_result+0x3fffff18>
+  1c:	400005b7          	lui	a1,0x40000
+  20:	60278793          	addi	a5,a5,1538 # 8040602 <sw_result+0x804050a>
+  24:	07030737          	lui	a4,0x7030
+  28:	00f5a023          	sw	a5,0(a1) # 40000000 <sw_result+0x3fffff08>
+  2c:	50170713          	addi	a4,a4,1281 # 7030501 <sw_result+0x7030409>
+  30:	00e5a023          	sw	a4,0(a1)
+  34:	400007b7          	lui	a5,0x40000
+  38:	40000737          	lui	a4,0x40000
+  3c:	00870713          	addi	a4,a4,8 # 40000008 <sw_result+0x3fffff10>
+  40:	00c7a223          	sw	a2,4(a5) # 40000004 <sw_result+0x3fffff0c>
+  44:	00072783          	lw	a5,0(a4)
+  48:	0017f793          	andi	a5,a5,1
+  4c:	fe078ce3          	beqz	a5,44 <main+0x38>
+  50:	400007b7          	lui	a5,0x40000
+  54:	00100713          	li	a4,1
+  58:	00e7aa23          	sw	a4,20(a5) # 40000014 <sw_result+0x3fffff1c>
+  5c:	00000513          	li	a0,0
+  60:	0d800793          	li	a5,216
+  64:	0f800813          	li	a6,248
+  68:	00351713          	slli	a4,a0,0x3
+  6c:	00e78633          	add	a2,a5,a4
+  70:	00062683          	lw	a3,0(a2)
+  74:	0107a303          	lw	t1,16(a5)
+  78:	00462583          	lw	a1,4(a2)
+  7c:	0187a883          	lw	a7,24(a5)
+  80:	026686b3          	mul	a3,a3,t1
+  84:	00e80733          	add	a4,a6,a4
+  88:	031585b3          	mul	a1,a1,a7
+  8c:	00b686b3          	add	a3,a3,a1
+  90:	00d72023          	sw	a3,0(a4)
+  94:	00062683          	lw	a3,0(a2)
+  98:	0147a883          	lw	a7,20(a5)
+  9c:	00462603          	lw	a2,4(a2)
+  a0:	01c7a583          	lw	a1,28(a5)
+  a4:	031686b3          	mul	a3,a3,a7
+  a8:	02b60633          	mul	a2,a2,a1
+  ac:	00c686b3          	add	a3,a3,a2
+  b0:	00d72223          	sw	a3,4(a4)
+  b4:	00051663          	bnez	a0,c0 <main+0xb4>
+  b8:	00100513          	li	a0,1
+  bc:	fadff06f          	j	68 <main+0x5c>
+  c0:	400007b7          	lui	a5,0x40000
+  c4:	00100713          	li	a4,1
+  c8:	00e7ac23          	sw	a4,24(a5) # 40000018 <sw_result+0x3fffff20>
+  cc:	00000013          	nop
+  d0:	00000013          	nop
+  d4:	ff9ff06f          	j	cc <main+0xc0>

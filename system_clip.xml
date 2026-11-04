@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CLIPDeclaration Name="RISCV_Systolic_Phase2">
+  <FormatVersion>1.0</FormatVersion>
+  <HDLName>system</HDLName>
+  <ImplementationList>
+    <Path Name="system.v">
+      <TopLevel/>
+      <MD5></MD5>
+    </Path>
+  </ImplementationList>
+  <InterfaceList>
+    <Interface Name="Clock_40MHz">
+      <InterfaceType>Clock</InterfaceType>
+      <SignalList>
+        <Signal Name="clk">
+          <HDLName>clk</HDLName>
+          <Direction>ToCLIP</Direction>
+          <SignalType>clock</SignalType>
+          <FreqInHertz>
+            <Max>40000000</Max>
+            <Min>40000000</Min>
+          </FreqInHertz>
+        </Signal>
+      </SignalList>
+    </Interface>
+    <Interface Name="LabVIEW_Telemetry">
+      <InterfaceType>Fabric</InterfaceType>
+      <SignalList>
+        <Signal Name="reset">
+          <HDLName>reset</HDLName>
+          <Direction>ToCLIP</Direction>
+          <DataType><Boolean/></DataType>
+        </Signal>
+        <Signal Name="out_00">
+          <HDLName>out_00</HDLName>
+          <Direction>FromCLIP</Direction>
+          <DataType><U32/></DataType>
+        </Signal>
+        <Signal Name="out_01">
+          <HDLName>out_01</HDLName>
+          <Direction>FromCLIP</Direction>
+          <DataType><U32/></DataType>
+        </Signal>
+        <Signal Name="out_10">
+          <HDLName>out_10</HDLName>
+          <Direction>FromCLIP</Direction>
+          <DataType><U32/></DataType>
+        </Signal>
+        <Signal Name="out_11">
+          <HDLName>out_11</HDLName>
+          <Direction>FromCLIP</Direction>
+          <DataType><U32/></DataType>
+        </Signal>
+        <Signal Name="hw_cycles">
+          <HDLName>hw_cycles</HDLName>
+          <Direction>FromCLIP</Direction>
+          <DataType><U32/></DataType>
+        </Signal>
+        <Signal Name="sw_cycles">
+          <HDLName>sw_cycles</HDLName>
+          <Direction>FromCLIP</Direction>
+          <DataType><U32/></DataType>
+        </Signal>
+        <Signal Name="led0">
+          <HDLName>led0</HDLName>
+          <Direction>FromCLIP</Direction>
+          <DataType><Boolean/></DataType>
+        </Signal>
+        <Signal Name="led1">
+          <HDLName>led1</HDLName>
+          <Direction>FromCLIP</Direction>
+          <DataType><Boolean/></DataType>
+        </Signal>
+      </SignalList>
+    </Interface>
+  </InterfaceList>
+</CLIPDeclaration>
