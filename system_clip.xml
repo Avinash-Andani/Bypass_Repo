@@ -3,10 +3,7 @@
   <FormatVersion>1.0</FormatVersion>
   <HDLName>system</HDLName>
   <ImplementationList>
-    <Path Name="system.v">
-      <TopLevel/>
-      <MD5></MD5>
-    </Path>
+    <Path>system.v</Path>
   </ImplementationList>
   <InterfaceList>
     <Interface Name="Clock_40MHz">
