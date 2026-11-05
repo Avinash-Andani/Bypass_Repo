@@ -6,6 +6,7 @@ module pe #(
 )(
     input  wire                  clk,
     input  wire                  rst,
+    input  wire                  clear,
     input  wire [DATA_WIDTH-1:0] a_in,
     input  wire [DATA_WIDTH-1:0] b_in,
     output reg  [DATA_WIDTH-1:0] a_out,
@@ -15,6 +16,10 @@ module pe #(
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
+            a_out   <= 0;
+            b_out   <= 0;
+            mac_out <= 0;
+        end else if (clear) begin
             a_out   <= 0;
             b_out   <= 0;
             mac_out <= 0;

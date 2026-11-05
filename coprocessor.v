@@ -7,6 +7,7 @@ module coprocessor #(
 )(
     input  wire                  clk,
     input  wire                  rst,
+    input  wire                  clear,
     input  wire                  start,
     input  wire                  wr_en,
     output reg                   done,
@@ -26,24 +27,24 @@ module coprocessor #(
     reg  rd_en;
 
     fifo #(.DATA_WIDTH(DATA_WIDTH), .DEPTH(FIFO_DEPTH)) fifo_a0 (
-        .clk(clk), .rst(rst), .wr_en(wr_en), .rd_en(rd_en),
+        .clk(clk), .rst(rst), .clear(clear), .wr_en(wr_en), .rd_en(rd_en),
         .data_in(a_in_0), .data_out(a_wires[0]), .full(), .empty(empty_flag)
     );
     fifo #(.DATA_WIDTH(DATA_WIDTH), .DEPTH(FIFO_DEPTH)) fifo_a1 (
-        .clk(clk), .rst(rst), .wr_en(wr_en), .rd_en(rd_en),
+        .clk(clk), .rst(rst), .clear(clear), .wr_en(wr_en), .rd_en(rd_en),
         .data_in(a_in_1), .data_out(a_wires[1]), .full(), .empty()
     );
     fifo #(.DATA_WIDTH(DATA_WIDTH), .DEPTH(FIFO_DEPTH)) fifo_b0 (
-        .clk(clk), .rst(rst), .wr_en(wr_en), .rd_en(rd_en),
+        .clk(clk), .rst(rst), .clear(clear), .wr_en(wr_en), .rd_en(rd_en),
         .data_in(b_in_0), .data_out(b_wires[0]), .full(), .empty()
     );
     fifo #(.DATA_WIDTH(DATA_WIDTH), .DEPTH(FIFO_DEPTH)) fifo_b1 (
-        .clk(clk), .rst(rst), .wr_en(wr_en), .rd_en(rd_en),
+        .clk(clk), .rst(rst), .clear(clear), .wr_en(wr_en), .rd_en(rd_en),
         .data_in(b_in_1), .data_out(b_wires[1]), .full(), .empty()
     );
 
     systolic_2x2 #(.DATA_WIDTH(DATA_WIDTH), .ACC_WIDTH(ACC_WIDTH)) array (
-        .clk(clk), .rst(rst),
+        .clk(clk), .rst(rst), .clear(clear),
         .a_in_0(a_wires[0]), .a_in_1(a_wires[1]),
         .b_in_0(b_wires[0]), .b_in_1(b_wires[1]),
         .mac_00(out_00), .mac_01(out_01),
@@ -60,13 +61,18 @@ module coprocessor #(
             rd_en <= 1'b0;
             done  <= 1'b0;
             timer <= 4'd0;
+        end else if (clear) begin
+            state <= IDLE;
+            rd_en <= 1'b0;
+            done  <= 1'b0;
+            timer <= 4'd0;
         end else begin
             case (state)
                 IDLE: begin
                     done <= 1'b0;
                     if (start && !empty_flag) begin
                         state <= COMPUTE;
-                        rd_en <= 1'b1; // Pop 1st FIFO vector on next clock edge
+                        rd_en <= 1'b1;
                         timer <= 4'd0;
                     end
                 end
@@ -74,7 +80,7 @@ module coprocessor #(
                 COMPUTE: begin
                     timer <= timer + 4'd1;
                     if (timer == 4'd1)
-                        rd_en <= 1'b0; // Pop 2nd FIFO vector, then close valve
+                        rd_en <= 1'b0;
                     if (timer == 4'd5) begin
                         state <= DONE;
                         timer <= 4'd0;

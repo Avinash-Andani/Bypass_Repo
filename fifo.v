@@ -6,6 +6,7 @@ module fifo #(
 )(
     input  wire                  clk,
     input  wire                  rst,
+    input  wire                  clear,
     input  wire                  wr_en,
     input  wire                  rd_en,
     input  wire [DATA_WIDTH-1:0] data_in,
@@ -24,6 +25,11 @@ module fifo #(
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
+            wr_ptr   <= 0;
+            rd_ptr   <= 0;
+            count    <= 0;
+            data_out <= 0;
+        end else if (clear) begin
             wr_ptr   <= 0;
             rd_ptr   <= 0;
             count    <= 0;
