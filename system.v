@@ -3,18 +3,18 @@
 module system (
     input  wire        clk,             // 40 MHz LabVIEW FPGA Clock (25 ns period)
     input  wire        reset,           // Active-High Reset from LabVIEW
-    input  wire [7:0]  digit_sel,       // Live Digit Selector (0..3) from LabVIEW Front Panel
-    output reg  [31:0] out_00,          // Top-Left 2x2 Sub-Block C[0][0] (20)
-    output reg  [31:0] out_01,          // Top-Left 2x2 Sub-Block C[0][1] (25)
-    output reg  [31:0] out_10,          // Top-Left 2x2 Sub-Block C[1][0] (42)
-    output reg  [31:0] out_11,          // Top-Left 2x2 Sub-Block C[1][1] (55)
+    input  wire [7:0]  digit_sel,       // Live Image Selector (0..3) from LabVIEW Front Panel
+    output reg  [31:0] out_00,          // Live Output Matrix Quadrant [0,0] / Verified C[0,0]
+    output reg  [31:0] out_01,          // Live Output Matrix Quadrant [0,1] / Verified C[0,1]
+    output reg  [31:0] out_10,          // Live Output Matrix Quadrant [1,0] / Verified C[1,0]
+    output reg  [31:0] out_11,          // Live Output Matrix Quadrant [1,1] / Verified C[1,1]
     output reg  [31:0] hw_cycles,       // Locked Phase-2 4x4 AXI-Lite DMA Execution Cycles
     output reg  [31:0] sw_cycles,       // Locked Phase-2 4x4 Software Execution Cycles
-    output reg  [31:0] predicted_digit, // Recognized Digit Class (0, 1, 2, or 3)
-    output wire        led0,            // myRIO Physical LED0 (Digit 0)
-    output wire        led1,            // myRIO Physical LED1 (Digit 1)
-    output wire        led2,            // myRIO Physical LED2 (Digit 2)
-    output wire        led3             // myRIO Physical LED3 (Digit 3)
+    output reg  [31:0] predicted_digit, // Recognized Image Class (0, 1, 2, or 3)
+    output wire        led0,            // myRIO Physical LED0 (Image Class 0)
+    output wire        led1,            // myRIO Physical LED1 (Image Class 1)
+    output wire        led2,            // myRIO Physical LED2 (Image Class 2)
+    output wire        led3             // myRIO Physical LED3 (Image Class 3)
 );
 
     wire        mem_valid;
@@ -39,9 +39,6 @@ module system (
         .mem_rdata (mem_rdata)
     );
 
-    // =========================================================================
-    // 2-Master System Bus Arbiter (PicoRV32 CPU vs. AXI4-Lite DMA Master)
-    // =========================================================================
     wire        dma_busy;
     wire        dma_done;
     wire [9:0]  dma_bram_addr;
@@ -54,7 +51,6 @@ module system (
     wire        is_mmio       = (mem_addr[31:12] == 20'h40000);
     wire        is_dma_cfg    = (mem_addr[31:12] == 20'h50000);
 
-    // Arbiter mux: DMA takes synchronous BRAM port whenever dma_busy == 1
     wire [9:0]  arb_bram_addr  = dma_busy ? dma_bram_addr  : cpu_word_addr;
     wire [3:0]  arb_bram_wstrb = dma_busy ? {4{dma_bram_wen}} : ((mem_valid && !mem_ready && is_bram) ? mem_wstrb : 4'b0000);
     wire [31:0] arb_bram_wdata = dma_busy ? dma_bram_wdata : mem_wdata;
@@ -62,7 +58,7 @@ module system (
     (* ram_style = "block" *) reg [31:0] memory [0:1023];
 
     initial begin
-        $readmemh("C:/myrio_workspace/1_github_src/software/firmware.hex", memory);
+        $readmemh("software/firmware.hex", memory);
     end
 
     always @(posedge clk) begin
@@ -73,9 +69,6 @@ module system (
         bram_rdata <= memory[arb_bram_addr];
     end
 
-    // =========================================================================
-    // 4x4 Systolic Array Coprocessor + AXI4-Lite DMA Multiplexing
-    // =========================================================================
     wire        coproc_done;
     reg         cpu_coproc_clear;
     reg         cpu_coproc_start;
@@ -147,16 +140,13 @@ module system (
         .out_30(c_out_30), .out_31(c_out_31), .out_32(c_out_32), .out_33(c_out_33)
     );
 
-    // =========================================================================
-    // 3-Regime 40 MHz Cycle-Accurate Performance Counters
-    // =========================================================================
     reg        mmio_counting;
     reg        dma_counting;
     reg        sw_counting;
     reg [31:0] mmio_counter_live;
     reg [31:0] dma_counter_live;
     reg [31:0] sw_counter_live;
-    reg [31:0] mmio_cycles; // Stores 4x4 CPU-MMIO cycle count (~78 cycles)
+    reg [31:0] mmio_cycles;
     reg        mmio_cycles_locked;
     reg        dma_cycles_locked;
     reg        coproc_done_latched;
@@ -200,14 +190,12 @@ module system (
             cpu_coproc_start <= 1'b0;
             cpu_coproc_wr_en <= 1'b0;
 
-            // Stall CPU memory handshake if DMA is currently bursting on BRAM
             if (mem_valid && !mem_ready && !(is_bram && dma_busy)) begin
                 mem_ready <= 1'b1;
             end else begin
                 mem_ready <= 1'b0;
             end
 
-            // 1. 4x4 CPU-MMIO Cycle Counter (Measures CPU data-feed + 4x4 compute)
             if (mmio_counting) begin
                 if (coproc_done) begin
                     mmio_counting       <= 1'b0;
@@ -223,7 +211,6 @@ module system (
                 coproc_done_latched <= 1'b1;
             end
 
-            // 2. 4x4 AXI4-Lite DMA Cycle Counter (Measures DMA burst feed + 4x4 compute)
             if (s_axi_wen && (mem_addr[3:0] == 4'hC) && mem_wdata[0]) begin
                 dma_counter_live <= 32'd1;
                 dma_counting     <= 1'b1;
@@ -239,17 +226,13 @@ module system (
                 end
             end
 
-            // 3. 4x4 Software O(N^3) Cycle Counter
             if (sw_counting) begin
                 sw_counter_live <= sw_counter_live + 32'd1;
             end
 
-            // CPU MMIO Writes (0x4000_0000 - 0x4000_001C)
             if (mem_valid && !mem_ready && (mem_wstrb != 4'b0000) && is_mmio) begin
                 case (mem_addr)
-                    32'h4000_0000: begin
-                        cpu_a_packed <= mem_wdata;
-                    end
+                    32'h4000_0000: cpu_a_packed <= mem_wdata;
                     32'h4000_0004: begin
                         cpu_b_packed     <= mem_wdata;
                         cpu_coproc_wr_en <= 1'b1;
@@ -286,6 +269,11 @@ module system (
                         predicted_digit <= mem_wdata;
                         class_valid     <= 1'b1;
                     end
+                    // Live Output Matrix Streaming Registers for LabVIEW Intensity Graph
+                    32'h4000_0020: out_00 <= mem_wdata;
+                    32'h4000_0024: out_01 <= mem_wdata;
+                    32'h4000_0028: out_10 <= mem_wdata;
+                    32'h4000_002C: out_11 <= mem_wdata;
                     default: ;
                 endcase
             end
